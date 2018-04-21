@@ -1,0 +1,866 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="
+- storm," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="##Storm事务-批处理原理  事务对于容错机制，Storm通过一个系统级别的组件acker，判断tuple是否发送成功，进而spout可以重发该tuple，保证一个tuple在出错的情况下至少被重发一次。但是在需要精确统计tuple的场景下（销售金额），希望每个tuple“被且仅被处理一次”。storm引入了Transactional Topology。它可以保证每一个“tuple”被且仅被处">
+<meta name="keywords" content="
+- storm">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Storm事务-批处理原理">
+<meta property="og:url" content="http://yoursite.com/2016/10/08/stormshi-wu-pi-chu-li-yuan-li/index.html">
+<meta property="og:site_name" content="Ddup">
+<meta property="og:description" content="##Storm事务-批处理原理  事务对于容错机制，Storm通过一个系统级别的组件acker，判断tuple是否发送成功，进而spout可以重发该tuple，保证一个tuple在出错的情况下至少被重发一次。但是在需要精确统计tuple的场景下（销售金额），希望每个tuple“被且仅被处理一次”。storm引入了Transactional Topology。它可以保证每一个“tuple”被且仅被处">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/uploads/2016/10/--1.png">
+<meta property="og:image" content="http://yoursite.com/uploads/2016/10/--2.png">
+<meta property="og:image" content="http://yoursite.com/uploads/2016/10/--3.png">
+<meta property="og:image" content="http://yoursite.com/uploads/2016/10/--4.png">
+<meta property="og:updated_time" content="2016-10-08T05:59:01.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Storm事务-批处理原理">
+<meta name="twitter:description" content="##Storm事务-批处理原理  事务对于容错机制，Storm通过一个系统级别的组件acker，判断tuple是否发送成功，进而spout可以重发该tuple，保证一个tuple在出错的情况下至少被重发一次。但是在需要精确统计tuple的场景下（销售金额），希望每个tuple“被且仅被处理一次”。storm引入了Transactional Topology。它可以保证每一个“tuple”被且仅被处">
+<meta name="twitter:image" content="http://yoursite.com/uploads/2016/10/--1.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/10/08/stormshi-wu-pi-chu-li-yuan-li/"/>
+
+
+
+
+
+  <title> Storm事务-批处理原理 | Ddup </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ddup</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/10/08/stormshi-wu-pi-chu-li-yuan-li/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ddup">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ddup">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Storm事务-批处理原理
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-10-08T13:54:36+08:00">
+                2016-10-08
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>##Storm事务-批处理原理</p>
+<ol>
+<li><p>事务<br>对于容错机制，Storm通过一个系统级别的组件acker，判断tuple是否发送成功，进而spout可以重发该tuple，保证一个tuple在出错的情况下至少被重发一次。<br>但是在需要精确统计tuple的场景下（销售金额），希望每个tuple“被且仅被处理一次”。storm引入了Transactional Topology。它可以保证每一个“tuple”被且仅被处理一次，这样就可以实现一种非常准确，且高度容错方式来实现计数类应用。</p>
+</li>
+<li><p>批处理<br>逐个处理单个tuple，增加很多开销，如写库、输出结果频率过高。事务处理单个tuple效率比较低，因此storm中引入batch处理。<br>批处理是一次性处理一批（batch）tuple，事务可以确保该批次要么全部处理成功，如果有处理失败的则全部不计，Storm会对失败的批次重新发送，且确保每一个batch被且仅被处理一次。</p>
+</li>
+</ol>
+<p>###事务机制和原理<br>对于只处理一次的需要，从原理上来讲，需要在发送tuple的时候带上，txid，在需要事务处理的时候，根据该txid是否以前已经处理成功来决定是否进行处理，当然需要把txid和处理结果一起做保存。<br>在事务batch处理中，一批tuple赋予一个txid，为了提高batch之间处理的并行度，storm采用了pipeline处理模型，这样多个事务可以并行执行，但是commit的是严格按照顺序的。</p>
+<p>Storm事务处理中，把一个batch的计算分成两个阶段processing和commit阶段：<br>processing阶段：多个batch可以并行计算。<br>commit阶段：batch之间强制按照顺序进行提交。<br><img src="/uploads/2016/10/--1.png" alt=""></p>
+<p>####事务Topologies<br>使用Transactional Topologies的时候，storm为你做下面这些事情。</p>
+<ul>
+<li>管理状态：Storm把所有实现Transactional Topologies所必须的状态保存在zookeeper里面，包括当前transaction id 以及定义每一个batch的一些元数据。</li>
+<li>协调事务：Storm帮你管理所有事情，如帮你决定在任何一个时间点是该processing还是该committing.</li>
+<li>错误检测: Storm利用acking框架来高效地检测什么时候一个batch被成功处理了，被成功提交了，或者失败了。Storm然后会相应地replay对应的batch。你不需要自己手    动做任何acking或者anchoring (emit时发生的动作)。</li>
+<li>内置的批处理API: Storm在普通bolt之上包装了一层API来提供对tuple的批处理支持。Storm管理所有的协调工作，包括决定什么时候一个bolt接收到一个特定transaction的所有tuple。Storm同时也会自动清理每个transaction所产生的中间数据。</li>
+</ul>
+<p>事务性的spout需要实现ITransactionalSpout，这个接口包含两个内部接口类Coordinator和Emitter。在topology运行的时候，事务性的spout内部包含一个子Topology，结构图如下：</p>
+<p><img src="/uploads/2016/10/--2.png" alt=""></p>
+<p>这里面有两种类型的tuple，一种是事务性的tuple，一种是batch中的tuple；<br>coordinator 开启一个事务准备发射一个batch时候，进入一个事务的processing阶段，会发射一个事务性 tuple(transactionAttempt &amp; metadata)到”batch emit”流</p>
+<p>Emitter以all grouping(广播)的方式订阅coordinator的”batch emit”流，负责为每个batch实际发射tuple。发送的tuple都必须以TransactionAttempt作为第一个field，storm根据这个field来判断tuple属于哪一个batch。</p>
+<p>coordinator只有一个，emitter根据并行度可以有多个实例</p>
+<p>coordinator只有一个，emitter根据并行度可以有多个实例</p>
+<p>####TransactionAttempt 和 元数据</p>
+<p>TransactionAttempt包含两个值：一个transaction id，一个attempt id。transaction id的作用就是我们上面介绍的对于每个batch中的tuple是唯一的，而且不管这个batch    replay多少次都是一样的。<br>attempt id是对于每个batch唯一的一个id， 但是对于同一个batch，它replay之后的attempt id跟replay之前就不一样了，<br>我们可以把attempt id理解成replay-times， storm利用这个id来区别一个batch发射的tuple的不同版本</p>
+<p>metadata(元数据)中包含当前事务可以从哪个point进行重放数据，存放在zookeeper中的，spout可以通过Kryo从zookeeper中序列化和反序列化该元数据。</p>
+<p><img src="/uploads/2016/10/--3.png" alt=""><br>内部处理流程</p>
+<p>####事务性Bolt</p>
+<ul>
+<li>BaseTransactionalBolt处理batch在一起的tuples，对于每一个tuple调用调用execute方 法，而在整个batch处理(processing)完成的时候调用finishBatch方法。如果BatchBolt被标记成Committer，则 只能在commit阶段调用finishBatch方法。一个batch的commit阶段由storm保证只在前一个batch成功提交之后才会执行。并且它会重试直到topology里面的所有bolt在commit完成提交。那么如何知道batch的processing完成了，也就是bolt是否接收处理了batch里面所有的tuple；在bolt内部，有一个 CoordinatedBolt的模型。<br>CoordinateBolt具体原理如下：</li>
+</ul>
+<p><img src="/uploads/2016/10/--4.png" alt=""></p>
+<p>每个CoordinateBolt记录两个值：有哪些task给我发送了tuple（根据topology的grouping信息）；我要给哪些task发送信息（同样根据groping信息）。</p>
+<p>等所有的tuple都发送完了之后，CoordinateBolt通过另外一个特殊的stream以emitDirect的方式告诉所有它发送过 tuple的task，它发送了多少tuple给这个task。下游task会将这个数字和自己已经接收到的tuple数量做对比，如果相等，则说明处理 完了所有的tuple。</p>
+<p>下游CoordinateBolt会重复上面的步骤，通知其下游。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/storm/" rel="tag"># 
+- storm</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/10/07/stormke-kao-xing-chu-li/" rel="next" title="Storm可靠性处理">
+                <i class="fa fa-chevron-left"></i> Storm可靠性处理
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/10/08/stormshi-wu-shi-li-cheng-xu-fen-xi/" rel="prev" title="Storm事务示例程序分析">
+                Storm事务示例程序分析 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpeg"
+               alt="ddup" />
+          <p class="site-author-name" itemprop="name">ddup</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">32</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:ddupsl@163.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/pslzym" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ddup</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+      search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="local-search-pop-overlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+      $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = $( "entry", xmlResponse ).map(function() {
+            return {
+              title: $( "title", this ).text(),
+              content: $("content",this).text(),
+              url: $( "url" , this).text()
+            };
+          }).get();
+          var $input = document.getElementById(search_id);
+          var $resultContent = document.getElementById(content_id);
+          $input.addEventListener('input', function(){
+            var matchcounts = 0;
+            var str='<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length > 1) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var content_index = [];
+                var data_title = data.title.trim().toLowerCase();
+                var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                var data_url = decodeURIComponent(data.url);
+                var index_title = -1;
+                var index_content = -1;
+                var first_occur = -1;
+                // only match artiles with not empty titles and contents
+                if(data_title != '') {
+                  keywords.forEach(function(keyword, i) {
+                    index_title = data_title.indexOf(keyword);
+                    index_content = data_content.indexOf(keyword);
+                    if( index_title >= 0 || index_content >= 0 ){
+                      isMatch = true;
+                      if (i == 0) {
+                        first_occur = index_content;
+                      }
+                    }
+
+                  });
+                }
+                // show search results
+                if (isMatch) {
+                  matchcounts += 1;
+                  str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                  var content = data.content.trim().replace(/<[^>]+>/g,"");
+                  if (first_occur >= 0) {
+                    // cut out 100 characters
+                    var start = first_occur - 20;
+                    var end = first_occur + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if(start == 0){
+                      end = 50;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    var match_content = content.substring(start, end);
+                    // highlight all keywords
+                    keywords.forEach(function(keyword){
+                      var regS = new RegExp(keyword, "gi");
+                      match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                    });
+
+                    str += "<p class=\"search-result\">" + match_content +"...</p>"
+                  }
+                  str += "</li>";
+                }
+              })};
+            str += "</ul>";
+            if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+            if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+            $resultContent.innerHTML = str;
+          });
+          proceedsearch();
+        }
+      });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>

@@ -1,0 +1,898 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="
+- Linux操作运维," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="##vim shift + G到达文件的底部gg到达文件的头部:u用于返回上一个操作 Ctrl+f和Ctrl+b是上下翻页。Ctrl+u和Ctrl+d是上下翻半页。 n : n如果是20.按下数字后再按空格。光标会向右移动20格。0  移动到这一行的开头$  移动到这一行的结尾 :! command 暂时离开vi到指令列模式，执行command的显示结果。 :w [filename] 将编辑的数据">
+<meta name="keywords" content="
+- Linux操作运维">
+<meta property="og:type" content="article">
+<meta property="og:title" content="vim&#x2F;gdb操作积累备份">
+<meta property="og:url" content="http://yoursite.com/2016/09/22/vimcao-zuo-ji-lei-bei-fen/index.html">
+<meta property="og:site_name" content="Ddup">
+<meta property="og:description" content="##vim shift + G到达文件的底部gg到达文件的头部:u用于返回上一个操作 Ctrl+f和Ctrl+b是上下翻页。Ctrl+u和Ctrl+d是上下翻半页。 n : n如果是20.按下数字后再按空格。光标会向右移动20格。0  移动到这一行的开头$  移动到这一行的结尾 :! command 暂时离开vi到指令列模式，执行command的显示结果。 :w [filename] 将编辑的数据">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2016-11-30T06:41:13.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="vim&#x2F;gdb操作积累备份">
+<meta name="twitter:description" content="##vim shift + G到达文件的底部gg到达文件的头部:u用于返回上一个操作 Ctrl+f和Ctrl+b是上下翻页。Ctrl+u和Ctrl+d是上下翻半页。 n : n如果是20.按下数字后再按空格。光标会向右移动20格。0  移动到这一行的开头$  移动到这一行的结尾 :! command 暂时离开vi到指令列模式，执行command的显示结果。 :w [filename] 将编辑的数据">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/09/22/vimcao-zuo-ji-lei-bei-fen/"/>
+
+
+
+
+
+  <title> vim/gdb操作积累备份 | Ddup </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ddup</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/22/vimcao-zuo-ji-lei-bei-fen/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ddup">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ddup">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                vim/gdb操作积累备份
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-22T11:27:06+08:00">
+                2016-09-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>##vim</p>
+<p>shift + G到达文件的底部<br>gg到达文件的头部<br>:u用于返回上一个操作</p>
+<p>Ctrl+f和Ctrl+b是上下翻页。<br>Ctrl+u和Ctrl+d是上下翻半页。</p>
+<p>n<space> : n如果是20.按下数字后再按空格。光标会向右移动20格。<br>0  移动到这一行的开头<br>$  移动到这一行的结尾</space></p>
+<p>:! command 暂时离开vi到指令列模式，执行command的显示结果。</p>
+<p>:w [filename] 将编辑的数据存储为另一个文档的数据。</p>
+<p>:r [filename] 在编辑的数据中，读入另外一个文档的数据。即将filename这个文档内容加到游标所在行的后面</p>
+<p>:n1,n2 w [filename] 将n1到n2行的数据写入filename</p>
+<p>区块选择（visual block）：<br>当我们按下v或者V（ctrl + v）时就进入visual模式<br>其他操作：<br>ctrl+v 区块选择，可以用长方形的方式选择资料<br>y   将反白的地方复制起来<br>d   将反白的地方删除</p>
+<pre><code>多档案编辑
+vim  XXX1   XXX2
+其他操作：
+:n 编辑下一个档案
+:N 编辑上一个档案
+:files 列出目前这个vim开启的所有档案
+
+
+多窗口编辑文件：
+通过vim打开一个文件之后，可以通过相应的命令打开另外一个文件，并且会在同时显示在屏幕上面。
+:sp filename
+其他操作
+ctrl + w + 上
+ctrl + w + 下
+</code></pre><p>替换命令：<br>最常用： :%s/vivian/sky/g（等同于 :g/vivian/s//sky/g） 替换每一行中所有 vivian 为 sky</p>
+<pre><code>:[range]s/pattern/string/[c,e,g,i]5.1
+range    指的是範圍，1,7 指從第一行至第七行，1,$ 指從第一行至最後一行，也就是整篇文章，也可以 % 代表。還記得嗎？ % 是目前編輯的文章，# 是前一次編輯的文章。
+pattern    就是要被替換掉的字串，可以用 regexp 來表示。
+string    將 pattern 由 string 所取代。
+c    confirm，每次替換前會詢問。
+e    不顯示 error。
+g    globe，不詢問，整行替換。
+i    ignore 不分大小寫。
+http://blog.csdn.net/glorin/article/details/6317098
+</code></pre><p>联想目录的全路径，可以直接: cd /XXX/   即可联想到相关路径  不必退出vim</p>
+<p>##gdb</p>
+<ul>
+<li>gdb开始命令：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">编译选项：gcc XX.c -o XX -g </span><br><span class="line">gdb &lt;program&gt;</span><br><span class="line"></span><br><span class="line">core文件：</span><br><span class="line">gdb &lt;program&gt; &lt;corefile&gt;</span><br><span class="line"></span><br><span class="line">服务程序运行方法：</span><br><span class="line">gdb &lt;program&gt; &lt;PID&gt;   可以指定pid</span><br><span class="line"></span><br><span class="line">disass main (查看函数的反汇编代码)</span><br></pre></td></tr></table></figure>
+<ul>
+<li>gdb交互命令：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">run：简记为 r ，其作用是运行程序，当遇到断点后，程序会在断点处停止运行，等待用户输入下一步的命令。</span><br><span class="line">continue （简写c ）：继续执行，到下一个断点处（或运行结束）</span><br><span class="line">next：（简写 n），单步跟踪程序，当遇到函数调用时，也不进入此函数体；此命令同 step 的主要区别是，step 遇到用户自定义的函数，将步进到函数中去运行，而 next 则直接调用函数，不会进入到函数体内。</span><br><span class="line">step （简写s）：单步调试如果有函数调用，则进入函数；与命令n不同，n是不进入调用的函数的</span><br><span class="line">until：当你厌倦了在一个循环体内单步跟踪时，这个命令可以运行程序直到退出循环体。</span><br><span class="line">until+行号： 运行至某行，不仅仅用来跳出循环</span><br><span class="line">finish： 运行程序，直到当前函数完成返回，并打印函数返回时的堆栈地址和返回值及参数值等信息。</span><br><span class="line">call 函数(参数)：调用程序中可见的函数，并传递“参数”，如：call gdb_test(55)</span><br><span class="line">quit：简记为 q ，退出gdb</span><br></pre></td></tr></table></figure>
+<ul>
+<li>gdb设置断点：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">break n （简写b n）:在第n行处设置断点</span><br><span class="line">（可以带上代码路径和代码名称： b OAGUPDATE.cpp:578）</span><br><span class="line"></span><br><span class="line">b fn1 if a＞b：条件断点设置</span><br><span class="line">break func（break缩写为b）：在函数func()的入口处设置断点，如：break cb_button</span><br><span class="line">delete 断点号n：删除第n个断点</span><br><span class="line">disable 断点号n：暂停第n个断点</span><br><span class="line">enable 断点号n：开启第n个断点</span><br><span class="line">clear 行号n：清除第n行的断点</span><br><span class="line">info b （info breakpoints） ：显示当前程序的断点设置情况</span><br><span class="line">delete breakpoints：清除所有断点：</span><br></pre></td></tr></table></figure>
+<ul>
+<li>查看源代码：</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">list ：简记为 l ，其作用就是列出程序的源代码，默认每次显示10行。</span><br><span class="line">list 行号：将显示当前文件以“行号”为中心的前后10行代码，如：list 12</span><br><span class="line">list 函数名：将显示“函数名”所在函数的源代码，如：list main</span><br><span class="line">list ：不带参数，将接着上一次 list 命令的，输出下边的内容。</span><br></pre></td></tr></table></figure>
+<ul>
+<li>打印表达式</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">print 表达式：简记为 p ，其中“表达式”可以是任何当前正在被测试程序的有效表达式，比如当前正在调试C语言的程序，那么“表达式”可以是任何C语言的有效表达式，包括数字，变量甚至是函数调用。</span><br><span class="line">print a：将显示整数 a 的值</span><br><span class="line">print ++a：将把 a 中的值加1,并显示出来</span><br><span class="line">print name：将显示字符串 name 的值</span><br><span class="line">print gdb_test(22)：将以整数22作为参数调用 gdb_test() 函数</span><br><span class="line">print gdb_test(a)：将以变量 a 作为参数调用 gdb_test() 函数</span><br><span class="line">display 表达式：在单步运行时将非常有用，使用display命令设置一个表达式后，它将在每次单步进行指令后，紧接着输出被设置的表达式及值。如： display a</span><br><span class="line">watch 表达式：设置一个监视点，一旦被监视的“表达式”的值改变，gdb将强行终止正在被调试的程序。如： watch a</span><br><span class="line">whatis ：查询变量或函数</span><br><span class="line">info function： 查询函数</span><br><span class="line">扩展info locals： 显示当前堆栈页的所有变量</span><br></pre></td></tr></table></figure>
+<ul>
+<li>查询运行信息</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">where/bt ：当前运行的堆栈列表；</span><br><span class="line">bt backtrace 显示当前调用堆栈</span><br><span class="line">up/down 改变堆栈显示的深度</span><br><span class="line">set args 参数:指定运行时的参数</span><br><span class="line">show args：查看设置好的参数</span><br><span class="line">info program： 来查看程序的是否在运行，进程号，被暂停的原因。</span><br></pre></td></tr></table></figure>
+<ul>
+<li>分割窗口</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">layout：用于分割窗口，可以一边查看代码，一边测试：</span><br><span class="line">layout src：显示源代码窗口</span><br><span class="line">layout asm：显示反汇编窗口</span><br><span class="line">layout regs：显示源代码/反汇编和CPU寄存器窗口</span><br><span class="line">layout split：显示源代码和反汇编窗口</span><br><span class="line">Ctrl + L：刷新窗口</span><br><span class="line">refresh : 刷新窗口</span><br><span class="line">ctrl + x + a 退出layout</span><br><span class="line">info win显示窗口的大小</span><br><span class="line">focus cmd/src/asm/regs/next/prev 切换当前窗口</span><br></pre></td></tr></table></figure>
+<ul>
+<li>多进程调试</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">follow-fork-mode  detach-on-fork   说明</span><br><span class="line">parent               on       只调试主进程（GDB默认）</span><br><span class="line">child                on       只调试子进程</span><br><span class="line">parent               off      同时调试两个进程，gdb跟主进程，子进程block在fork位置</span><br><span class="line">child                off      同时调试两个进程，gdb跟子进程，主进程block在fork位置</span><br><span class="line"></span><br><span class="line">设置方法：set follow-fork-mode [parent|child]   set detach-on-fork [on|off]</span><br><span class="line"></span><br><span class="line">info inferiors：查询正在调试的进程</span><br><span class="line">inferior &lt;infer number&gt; ：  切换调试的进程</span><br></pre></td></tr></table></figure>
+<ul>
+<li>gdb多线程调试</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">info thread 查看当前进程的线程。</span><br><span class="line">thread &lt;ID&gt; 切换调试的线程为指定ID的线程。</span><br><span class="line">break file.c:100 thread all  在file.c文件第100行处为所有经过这里的线程设置断点。</span><br><span class="line">set scheduler-locking off|on|step，这个是问得最多的。在使用step或者continue命令调试当前被调试线程的时候，其他线程也是同时执行的，怎么只让被调试程序执行呢？通过这个命令就可以实现这个需求。</span><br><span class="line">off 不锁定任何线程，也就是所有线程都执行，这是默认值。</span><br><span class="line">on 只有当前被调试程序会执行。</span><br><span class="line">step 在单步的时候，除了next过一个函数的情况(熟悉情况的人可能知道，这其实是一个设置断点然后continue的行为)以外，只有当前线程会执行。</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Linux操作运维/" rel="tag"># 
+- Linux操作运维</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/09/22/python-zhi-shi-ji-lei/" rel="next" title="python 知识积累">
+                <i class="fa fa-chevron-left"></i> python 知识积累
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/09/22/javascriptzhi-shi-bei-fen/" rel="prev" title="JavaScript知识备份">
+                JavaScript知识备份 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpeg"
+               alt="ddup" />
+          <p class="site-author-name" itemprop="name">ddup</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">32</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:ddupsl@163.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/pslzym" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ddup</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+      search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="local-search-pop-overlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+      $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = $( "entry", xmlResponse ).map(function() {
+            return {
+              title: $( "title", this ).text(),
+              content: $("content",this).text(),
+              url: $( "url" , this).text()
+            };
+          }).get();
+          var $input = document.getElementById(search_id);
+          var $resultContent = document.getElementById(content_id);
+          $input.addEventListener('input', function(){
+            var matchcounts = 0;
+            var str='<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length > 1) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var content_index = [];
+                var data_title = data.title.trim().toLowerCase();
+                var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                var data_url = decodeURIComponent(data.url);
+                var index_title = -1;
+                var index_content = -1;
+                var first_occur = -1;
+                // only match artiles with not empty titles and contents
+                if(data_title != '') {
+                  keywords.forEach(function(keyword, i) {
+                    index_title = data_title.indexOf(keyword);
+                    index_content = data_content.indexOf(keyword);
+                    if( index_title >= 0 || index_content >= 0 ){
+                      isMatch = true;
+                      if (i == 0) {
+                        first_occur = index_content;
+                      }
+                    }
+
+                  });
+                }
+                // show search results
+                if (isMatch) {
+                  matchcounts += 1;
+                  str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                  var content = data.content.trim().replace(/<[^>]+>/g,"");
+                  if (first_occur >= 0) {
+                    // cut out 100 characters
+                    var start = first_occur - 20;
+                    var end = first_occur + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if(start == 0){
+                      end = 50;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    var match_content = content.substring(start, end);
+                    // highlight all keywords
+                    keywords.forEach(function(keyword){
+                      var regS = new RegExp(keyword, "gi");
+                      match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                    });
+
+                    str += "<p class=\"search-result\">" + match_content +"...</p>"
+                  }
+                  str += "</li>";
+                }
+              })};
+            str += "</ul>";
+            if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+            if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+            $resultContent.innerHTML = str;
+          });
+          proceedsearch();
+        }
+      });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
