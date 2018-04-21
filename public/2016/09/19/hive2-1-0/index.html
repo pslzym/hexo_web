@@ -1,0 +1,904 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="
+- Hadoop
+- Hive," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="##HIVE环境搭建第一次搭建HIVE环境也是坑，由于之前没有过mysql的相关运维和开发经验，导致浪费了不少时间。 ###搭建HadoopHadoop环境一定是要的，不管你是伪分布式模式还是全分布式模式，还是HA搭建，这个必要要有。 ###HIVE安装  下载HIVE软件包 Mysql安装和配置 HIVE相关配置  ####下载HIVE软件包  我下载的2.1.0版本的：下载地址 由于2.1.0">
+<meta name="keywords" content="
+- Hadoop
+- Hive">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Hive 2.1.0安装">
+<meta property="og:url" content="http://yoursite.com/2016/09/19/hive2-1-0/index.html">
+<meta property="og:site_name" content="Ddup">
+<meta property="og:description" content="##HIVE环境搭建第一次搭建HIVE环境也是坑，由于之前没有过mysql的相关运维和开发经验，导致浪费了不少时间。 ###搭建HadoopHadoop环境一定是要的，不管你是伪分布式模式还是全分布式模式，还是HA搭建，这个必要要有。 ###HIVE安装  下载HIVE软件包 Mysql安装和配置 HIVE相关配置  ####下载HIVE软件包  我下载的2.1.0版本的：下载地址 由于2.1.0">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2016-09-19T15:24:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hive 2.1.0安装">
+<meta name="twitter:description" content="##HIVE环境搭建第一次搭建HIVE环境也是坑，由于之前没有过mysql的相关运维和开发经验，导致浪费了不少时间。 ###搭建HadoopHadoop环境一定是要的，不管你是伪分布式模式还是全分布式模式，还是HA搭建，这个必要要有。 ###HIVE安装  下载HIVE软件包 Mysql安装和配置 HIVE相关配置  ####下载HIVE软件包  我下载的2.1.0版本的：下载地址 由于2.1.0">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    sidebar: {"position":"left","display":"always","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2016/09/19/hive2-1-0/"/>
+
+
+
+
+
+  <title> Hive 2.1.0安装 | Ddup </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Ddup</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocapitalize="off" autocomplete="off" autocorrect="off" placeholder="搜索..." spellcheck="false" type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2016/09/19/hive2-1-0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="ddup">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/uploads/avatar.jpeg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Ddup">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                Hive 2.1.0安装
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2016-09-19T23:16:38+08:00">
+                2016-09-19
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>##HIVE环境搭建<br>第一次搭建HIVE环境也是坑，由于之前没有过mysql的相关运维和开发经验，导致浪费了不少时间。</p>
+<p>###搭建Hadoop<br>Hadoop环境一定是要的，不管你是伪分布式模式还是全分布式模式，还是HA搭建，这个必要要有。</p>
+<p>###HIVE安装</p>
+<ul>
+<li>下载HIVE软件包</li>
+<li>Mysql安装和配置</li>
+<li>HIVE相关配置</li>
+</ul>
+<p>####下载HIVE软件包</p>
+<ul>
+<li>我下载的2.1.0版本的：<a href="http://apache.fayea.com/hive/" target="_blank" rel="noopener">下载地址</a></li>
+<li>由于2.1.0比较新，并且2.X的安装方法和1.X略有不同，相关资料也比较少，初次安装比较麻烦。</li>
+</ul>
+<p>1.将 apache-hive-2.1.0-bin.tar.gz拷贝到/home/hadoop/Hive<br>2.解压tar -zxvf apache-hive-2.1.0-bin.tar.gz<br>3.cd /home/hadoop/Hive/apache-hive-2.1.0-bin/conf<br>4.mv hive-default.xml.template hive-site.xml<br>5.mv hive-env.sh.template hive-env.sh<br><code>Hive的主要配置文件就是hive-site.xml 和 hive-env.sh</code></p>
+<p>####安装mysql</p>
+<ol>
+<li><p>安装MySQL   （5.5.52）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install mysql-server</span><br><span class="line">sudo apt-get install mysql-client</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>启动MySQL<br><code>/etc/init.d/mysql restart</code></p>
+</li>
+<li><p>登陆mysql做一些配置</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">mysql -uroot -p</span><br><span class="line">Grant all on *.* to root@’%’ identified by ‘111111’ 设置登陆相关的权限，准许相关的用户远程登陆</span><br><span class="line">create database hive;此库为Hive所使用的库</span><br><span class="line">\q； 退出</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>配置MySQL的配置文件</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">修改/etc/mysql/my.cnf</span><br><span class="line">注释掉  bind-address           = 127.0.0.1</span><br><span class="line">如果是其他版本，把禁止远程访问的配置项去掉就行了</span><br><span class="line">重启MySQL	</span><br><span class="line">如果Hive 启动报出相关mysql链接问题，可以现在另外一台机器上面验证其是否可以远程链接MySQL。</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>####修改Hive配置，启动Hive<br>1.修改hive-env.sh<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">HADOOP_HOME=/usr/local/hadoop</span><br><span class="line">export HIVE_CONF_DIR=/home/hadoop/Hive/apache-hive-2.1.0-bin/conf</span><br></pre></td></tr></table></figure></p>
+<p>2.修改hive.<br>```</p>
+<pre><code>&lt;property&gt;
+   &lt;name&gt;hive.exec.scratchdir&lt;/name&gt;
+   &lt;value&gt;/tmp/hive&lt;/value&gt;
+   &lt;description&gt;HDFS root scratch dir for Hive jobs which gets created with write all (733) permission. For each connecting user, an HDFS scratch dir: ${hive.exec.scratchdir}/&amp;lt;username&amp;gt; is created, with ${hive.scratch.dir.permission}.&lt;/description&gt;
+ &lt;/property&gt;
+ &lt;property&gt;
+   &lt;name&gt;hive.exec.local.scratchdir&lt;/name&gt;
+   &lt;value&gt;/tmp/hive/local&lt;/value&gt;
+   &lt;description&gt;Local scratch space for Hive jobs&lt;/description&gt;
+ &lt;/property&gt;
+ &lt;property&gt;
+   &lt;name&gt;hive.downloaded.resources.dir&lt;/name&gt;
+   &lt;value&gt;/tmp/hive/resources&lt;/value&gt;
+   &lt;description&gt;Temporary local directory for added resources in the remote file system.&lt;/description&gt;
+ &lt;/property&gt;
+
+ &lt;property&gt;
+   &lt;name&gt;javax.jdo.option.ConnectionURL&lt;/name&gt;
+   &lt;value&gt;jdbc:mysql://master/hive&lt;/value&gt;
+   &lt;description&gt;
+     JDBC connect string for a JDBC metastore.
+     To use SSL to encrypt/authenticate the connection, provide database-specific SSL flag in the connection URL.
+     For example, jdbc:postgresql://myhost/db?ssl=true for postgres database.
+   &lt;/description&gt;
+ &lt;/property&gt;
+
+ &lt;property&gt;
+   &lt;name&gt;javax.jdo.option.ConnectionUserName&lt;/name&gt;
+   &lt;value&gt;root&lt;/value&gt;
+   &lt;description&gt;Username to use against metastore database&lt;/description&gt;
+ &lt;/property&gt;
+
+ &lt;property&gt;
+   &lt;name&gt;javax.jdo.option.ConnectionPassword&lt;/name&gt;
+   &lt;value&gt;111111&lt;/value&gt;
+   &lt;description&gt;password to use against metastore database&lt;/description&gt;
+ &lt;/property&gt;
+</code></pre><p>  此配置主要根据MySQL的数据库相关配置来设置。</p>
+<p>  3.Hadoop生成/tmp/hive目录，并改变相关权限。<br>  hadoop fs -mkdir /tmp/hive<br>  hadoop fs -chmod 777 /tmp/hive</p>
+<p>  4.启动Hive</p>
+<pre><code>1.    2.x以上的Hive必须先运行：schematool -dbType mysql -initSchema
+2.    hive
+</code></pre><p> 这样就部署好了Hive…</p>
+<p>####其他<br>如果是网络链接不了，试一试关闭防火墙：<br>    iptables -F </p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop-Hive/" rel="tag"># 
+- Hadoop
+- Hive</a>
+          
+        </div>
+      
+
+      
+        
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/09/19/kvmji-chu/" rel="next" title="KVM基础">
+                <i class="fa fa-chevron-left"></i> KVM基础
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/09/22/python-zhi-shi-ji-lei/" rel="prev" title="python 知识积累">
+                python 知识积累 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/uploads/avatar.jpeg"
+               alt="ddup" />
+          <p class="site-author-name" itemprop="name">ddup</p>
+           
+              <p class="site-description motion-element" itemprop="description"></p>
+          
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">32</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              <a href="/tags">
+                <span class="site-state-item-count">12</span>
+                <span class="site-state-item-name">标签</span>
+              </a>
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+            
+              <span class="links-of-author-item">
+                <a href="mailto:ddupsl@163.com" target="_blank" title="Email">
+                  
+                    <i class="fa fa-fw fa-envelope"></i>
+                  
+                  Email
+                </a>
+              </span>
+            
+              <span class="links-of-author-item">
+                <a href="https://github.com/pslzym" target="_blank" title="GitHub">
+                  
+                    <i class="fa fa-fw fa-github"></i>
+                  
+                  GitHub
+                </a>
+              </span>
+            
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">ddup</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Pisces
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+  
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+  
+  <script type="text/javascript" src="/lib/canvas-nest/canvas-nest.min.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.0"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+  
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length == 0) {
+      search_path = "search.xml";
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    function proceedsearch() {
+      $("body").append('<div class="local-search-pop-overlay">').css('overflow', 'hidden');
+      $('.popup').toggle();
+    }
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+      $.ajax({
+        url: path,
+        dataType: "xml",
+        async: true,
+        success: function( xmlResponse ) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = $( "entry", xmlResponse ).map(function() {
+            return {
+              title: $( "title", this ).text(),
+              content: $("content",this).text(),
+              url: $( "url" , this).text()
+            };
+          }).get();
+          var $input = document.getElementById(search_id);
+          var $resultContent = document.getElementById(content_id);
+          $input.addEventListener('input', function(){
+            var matchcounts = 0;
+            var str='<ul class=\"search-result-list\">';
+            var keywords = this.value.trim().toLowerCase().split(/[\s\-]+/);
+            $resultContent.innerHTML = "";
+            if (this.value.trim().length > 1) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var content_index = [];
+                var data_title = data.title.trim().toLowerCase();
+                var data_content = data.content.trim().replace(/<[^>]+>/g,"").toLowerCase();
+                var data_url = decodeURIComponent(data.url);
+                var index_title = -1;
+                var index_content = -1;
+                var first_occur = -1;
+                // only match artiles with not empty titles and contents
+                if(data_title != '') {
+                  keywords.forEach(function(keyword, i) {
+                    index_title = data_title.indexOf(keyword);
+                    index_content = data_content.indexOf(keyword);
+                    if( index_title >= 0 || index_content >= 0 ){
+                      isMatch = true;
+                      if (i == 0) {
+                        first_occur = index_content;
+                      }
+                    }
+
+                  });
+                }
+                // show search results
+                if (isMatch) {
+                  matchcounts += 1;
+                  str += "<li><a href='"+ data_url +"' class='search-result-title'>"+ data_title +"</a>";
+                  var content = data.content.trim().replace(/<[^>]+>/g,"");
+                  if (first_occur >= 0) {
+                    // cut out 100 characters
+                    var start = first_occur - 20;
+                    var end = first_occur + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if(start == 0){
+                      end = 50;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    var match_content = content.substring(start, end);
+                    // highlight all keywords
+                    keywords.forEach(function(keyword){
+                      var regS = new RegExp(keyword, "gi");
+                      match_content = match_content.replace(regS, "<b class=\"search-keyword\">"+keyword+"</b>");
+                    });
+
+                    str += "<p class=\"search-result\">" + match_content +"...</p>"
+                  }
+                  str += "</li>";
+                }
+              })};
+            str += "</ul>";
+            if (matchcounts == 0) { str = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>' }
+            if (keywords == "") { str = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>' }
+            $resultContent.innerHTML = str;
+          });
+          proceedsearch();
+        }
+      });}
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched == false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(function(e){
+      $('.popup').hide();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    });
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+  </script>
+
+
+  
+
+  
+
+  
+
+  
+
+
+  
+
+</body>
+</html>
